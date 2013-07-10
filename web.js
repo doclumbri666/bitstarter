@@ -12,7 +12,7 @@ var test=fs.readFileSync('index.html', 'utf-8', function (err, data) {
 
 
 app.get('/', function(request, response) {
-  response.send(test.toString('utf-8');
+  response.send(test.toString('utf-8'));
 });
 
 var port = process.env.PORT || 5000;
