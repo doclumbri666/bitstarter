@@ -24,20 +24,34 @@ References:
 var fs = require('fs');
 var program = require('commander');
 var cheerio = require('cheerio');
-var sys = require('util');
+var util = require('util');
 var rest = require('restler');
 var HTMLFILE_DEFAULT = "index.html";
 var CHECKSFILE_DEFAULT = "checks.json";
-var URL_DEFAULT ='https://obscure-scrubland-6834.herokuapp.com'; 
-/*rest.get('https://obscure-scrubland-6834.herokuapp.com').on('complete', function(result) {
-                   if (result instanceof Error) {
-                     sys.puts('Error: ' + result.message);
-                     this.retry(5000);
-                   } else {
-                     sys.puts(result);
-                   }
-                  });*/
+ 
+var url=function(input) {
+    return util.format(input);
+};
 
+
+var response2console = function(result) {
+    if (result instanceof Error) {
+       console.log('Error: ' + result.message);
+       this.retry(5000);
+    } else {
+    fs.writeFileSync('urldata.html', result);
+    }
+};
+
+var urloutput = function(inputurl, inputfunction) {
+    rest.get(inputurl.toString()).on("complete", inputfunction);
+};
+
+var urlbuild = function(urlfile, inputfunction){
+   // console.error("Write url %s", urlfile);
+    console.log(urloutput(urlfile, inputfunction));
+};
+   
 var assertFileExists = function(infile) {
     var instr = infile.toString();
     if(!fs.existsSync(instr)) {
@@ -54,11 +68,6 @@ var cheerioHtmlFile = function(htmlfile) {
 var loadChecks = function(checksfile) {
     return JSON.parse(fs.readFileSync(checksfile));
 };
-
-/* var geturl = function(url) {
-   return rest.get(url)=htmlfile;
-   }; */
-
 
 var checkHtmlFile = function(htmlfile, checksfile) {
     $ = cheerioHtmlFile(htmlfile);
@@ -79,15 +88,26 @@ var clone = function(fn) {
 
 if(require.main == module) {
     program
-        .option('-u, --url <url>', 'Path to url')
+        .option('-u, --url <url>', 'Url to index.html')
         .option('-f, --file <html_file>', 'Path to index.html', clone(assertFileExists), HTMLFILE_DEFAULT)
         .option('-c, --checks <check_file>', 'Path to checks.json', clone(assertFileExists), CHECKSFILE_DEFAULT)
         
         .parse(process.argv);
-    var checkJson = checkHtmlFile(program.file, program.checks);
-    var outJson = JSON.stringify(checkJson, null, 4);
-    console.log(outJson);
+    
+        if(program.url==undefined) {
+        compare=program.file;
+        var checkJson = checkHtmlFile(compare, program.checks);
+        var outJson = JSON.stringify(checkJson, null, 4);
+        console.log(outJson);
+        }
+        else if(program.url!=undefined) {
+        apiurl=url(program.url);
+        compare="urldata.html";
+        urlbuild(apiurl, response2console);
+        var checkJson = checkHtmlFile(compare, program.checks);
+        var outJson = JSON.stringify(checkJson, null, 4);
+        console.log(outJson);
 } else {
     exports.checkHtmlFile = checkHtmlFile;
 }
-
+}
